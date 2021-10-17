@@ -3,7 +3,7 @@ from functools import partial
 
 import jax
 from jax import numpy as jnp
-from flax.core.frozen_dict import FrozenDict
+from brax.training.types import PRNGKey, Param
 from yacs.config import CfgNode
 
 from ndp.dmp import DMP, StateDMP, ParamsDMP
@@ -18,17 +18,17 @@ class PhiNet(object):
         self.n_bfs = cfg.DMP.N_BFS
         output_size = self.n_dmp * self.n_bfs + self.n_dmp
         self._phi_net = make_model(
-            cfg.OMEGA_NET.FEATURES + [output_size],
+            cfg.PHI_NET.FEATURES + [output_size],
             observation_size,
         )
 
 
-    def init(self, key):
+    def init(self, key: PRNGKey):
         return self._phi_net.init(key)
 
 
     @partial(jax.jit, static_argnums=(0,))
-    def apply(self, params: FrozenDict, obs: jnp.ndarray) -> ParamsDMP:
+    def apply(self, params: Param, obs: jnp.ndarray) -> ParamsDMP:
         """Get the DMP parameters by taking observation as input
         .input:
             params: _phi_net parameters

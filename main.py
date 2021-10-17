@@ -31,7 +31,7 @@ def main():
         cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    dmp = DMP(cfg)
+    dmp = DMP(cfg, 0.05)
     dmp_params = ParamsDMP(g=jnp.ones([16, 10]), w=jnp.ones([16, 10, 10]))
     dmp_state = StateDMP(y=jnp.ones([16, 10]), yd=jnp.ones([16, 10]), x=1.0)
 

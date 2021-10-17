@@ -21,13 +21,14 @@ class StateDMP:
 
 class DMP(object):
 
-    def __init__(self, cfg: CfgNode):
+    def __init__(self, cfg: CfgNode, dt: float):
 
         # TODO: feed env to DMP to extract the state dims etc
 
+        self.dt = dt
+
         self.n_dmps = cfg.DMP.N_DMP
         self.n_bfs = cfg.DMP.N_BFS
-        self.dt = cfg.DMP.DT
 
         self.ax = cfg.DMP.AX
         self.ay = jnp.ones(self.n_dmps) * cfg.DMP.AY

@@ -2,12 +2,11 @@ from typing import Tuple
 
 import jax
 from flax.core.frozen_dict import FrozenDict
+from brax.training.types import PRNGKey, Param
 from yacs.config import CfgNode
 
 from ndp.dmp import DMP, StateDMP, ParamsDMP
 from ndp.omega import OmegaNet
-
-Param = Any
 
 
 class NDP(object):
@@ -17,17 +16,17 @@ class NDP(object):
             cfg: CfgNode,
             observation_size: int,
             action_size: int,
+            timestep: float,
     ):
 
-        self.dmp = DMP(cfg)
+        self.dmp = DMP(cfg, timestep)
         self.phi_net = PhiNet(cfg, observation_size)
         self.omega_net = OmegaNet(cfg, action_size)
 
 
-    def init(self, key) -> Tuple[FrozenDict, FrozenDict]:
+    def init(self, key: PRNGKey) -> Tuple[FrozenDict, FrozenDict]:
         key_phi, key_omega = jax.random.split(key, 2)
         return self.phi_net.init(key_phi), self.omega_net.init(key_omega)
-
 
 
     def apply(
