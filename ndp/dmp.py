@@ -1,16 +1,10 @@
+from typing import Tuple, Any
+from functools import partial
+
 import jax
 from jax import numpy as jnp
 from flax import struct
 from yacs.config import CfgNode
-
-from typing import (
-    Callable,
-    Tuple,
-    Optional,
-    Union,
-    Sequence,
-    Any,
-)
 
 
 @struct.dataclass
@@ -59,6 +53,7 @@ class DMP(object):
         return jnp.exp(-self.h * (x - self.c) ** 2)
 
 
+    @partial(jax.jit, static_argnums=(0,))
     def forcing_fn(
             self,
             x: float,
@@ -73,6 +68,8 @@ class DMP(object):
 
         return (x * (g - y0) * (w @ psi) / jnp.sum(psi))
 
+
+    @partial(jax.jit, static_argnums=(0,))
     def do_one_cs_step(
             self,
             x: float,
@@ -81,10 +78,10 @@ class DMP(object):
         """
         return x + (-self.ax * x) * self.tau * self.dt
 
-    def do_one_dmp_step(self, carry, unused_t):
-        y0, dmp_state, dmp_params, key = carry
 
-        key, _ = jax.random.split(key, 2)
+    @partial(jax.jit, static_argnums=(0,))
+    def do_one_dmp_step(self, carry, unused_t):
+        y0, dmp_state, dmp_params = carry
 
         g = dmp_params.g
 
@@ -101,19 +98,21 @@ class DMP(object):
         y = y + yd * self.tau * self.dt
         yd = yd + ydd * self.tau * self.dt
 
-        return (y0, StateDMP(y, yd, x), dmp_params, key), StateDMP(y, yd, x)
+        return ((y0, StateDMP(y=y, yd=yd, x=x), dmp_params),
+                StateDMP(y=y, yd=yd, x=x))
 
+
+    @partial(jax.jit, static_argnums=(0,))
     def do_dmp_unroll(
             self,
-            dmp_state: StateDMP,
             dmp_params: ParamsDMP,
-            key: Any,
+            dmp_state: StateDMP,
     ) -> Tuple[StateDMP, Any]:
 
         y0 = dmp_state.y
-        (_, _, _, key), dmp_states = jax.lax.scan(
+        _, dmp_states = jax.lax.scan(
             self.do_one_dmp_step,
-            (y0, dmp_state, dmp_params, key),
+            (y0, dmp_state, dmp_params),
             (), self.unroll_length,
         )
 
@@ -122,4 +121,4 @@ class DMP(object):
             yd=jnp.concatenate([dmp_state.yd[None, :], dmp_states.yd]),
             x=jnp.hstack([jnp.array(dmp_state.x), dmp_states.x]), # (unroll_length+1, )
         )
-        return dmp_states, key
+        return dmp_states

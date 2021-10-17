@@ -36,7 +36,7 @@ def main():
     dmp_state = StateDMP(y=jnp.ones([16, 10]), yd=jnp.ones([16, 10]), x=1.0)
 
     key = jax.random.PRNGKey(0)
-    dmp_states, _ = dmp.do_dmp_unroll(dmp_state, dmp_params, key)
+    dmp_states = dmp.do_dmp_unroll(dmp_params, dmp_state)
     print(dmp_states)
     print(dmp_states.y.shape)
     print(dmp_states.x.shape)
