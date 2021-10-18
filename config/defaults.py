@@ -13,6 +13,7 @@ _C.DMP = CN()
 _C.DMP.N_DMP = 10
 _C.DMP.N_BFS = 10
 _C.DMP.UNROLL_LENGTH = 20
+_C.DMP.INFER_STATE = True
 # TODO: these maybe should be outputted by $\Phi$ net
 _C.DMP.AX = 1.0     # the canonical system's a_x
 _C.DMP.AY = 25.0    # damping
@@ -40,7 +41,6 @@ _C.OMEGA_NET.LR = 1e-3
 _C.PHI_NET = CN()
 _C.PHI_NET.FEATURES = [64, 32, 32, 32]
 _C.PHI_NET.LR = 1e-3
-
 
 # ---------------------------------------------------------------------------- #
 # VALUE NET
@@ -74,7 +74,6 @@ _C.TRAIN.PPO = CN()
 _C.TRAIN.PPO.ENTROPY_COST = 1e-2
 _C.TRAIN.PPO.GAE_LAMBDA = 0.95
 _C.TRAIN.PPO.EPSILON = 0.3
-
 
 # ---------------------------------------------------------------------------- #
 # LOGGING

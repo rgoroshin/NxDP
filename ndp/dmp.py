@@ -8,15 +8,16 @@ from yacs.config import CfgNode
 
 
 @struct.dataclass
-class ParamsDMP:
-    w: jnp.ndarray
-    g: jnp.ndarray
-
-@struct.dataclass
 class StateDMP:
     y: jnp.ndarray
     yd: jnp.ndarray
     x: jnp.ndarray
+
+@struct.dataclass
+class ParamsDMP:
+    w: jnp.ndarray
+    g: jnp.ndarray
+    s: StateDmp # dmp starting state
 
 
 class DMP(object):
@@ -106,10 +107,10 @@ class DMP(object):
     @partial(jax.jit, static_argnums=(0,))
     def do_dmp_unroll(
             self,
-            dmp_params: ParamsDMP,
-            dmp_state: StateDMP,
+            dmp_params: ParamsDMP, # (batch_size, n_dmps(, ...))
     ) -> Tuple[StateDMP, Any]:
 
+        dmp_state = dmp_params.s
         y0 = dmp_state.y
         _, dmp_states = jax.lax.scan(
             self.do_one_dmp_step,
