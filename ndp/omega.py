@@ -12,11 +12,11 @@ from util.types import *
 
 class OmegaNet(object):
 
-    def __init__(self, cfg: CfgNode, action_size: int):
+    def __init__(self, cfg: CfgNode, target_action_size: int):
 
         self._omega_net = make_model(
-            cfg.OMEGA_NET.FEATURES + [action_size],
-            2 * cfg.DMP.N_DMP,
+            cfg.OMEGA_NET.FEATURES + [target_action_size],
+            4 * cfg.DMP.N_DMP,
         )
 
 
@@ -26,8 +26,13 @@ class OmegaNet(object):
 
     @staticmethod
     def concat_dmp_states(states: Sequence[StateDMP]):
-        dmp_states = jax.tree_multimap(lambda *args: jnp.stack(args), *states)
-        return jnp.concatenate([dmp_states.y, dmp_states.yd])
+        return jnp.concatenate(
+            [
+                states[0].y, states[0].yd,
+                states[1].y, states[1].yd,
+            ],
+            axis=-1
+        )
 
 
     @partial(jax.jit, static_argnums=(0,))
@@ -53,6 +58,6 @@ class OmegaNet(object):
         _, logits = jax.lax.scan(
             self._apply_step,
             (params, first_param_state),
-            dmp_states,
+            jax.tree_map(lambda x: x[1:], dmp_states),
         )
-        return logits # (unroll_length, batch_size, action_size)
+        return logits # (unroll_length, batch_size, target_action_size)

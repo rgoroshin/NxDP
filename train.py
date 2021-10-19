@@ -96,7 +96,7 @@ def train(
     policy_model = NDP(
         cfg,
         core_env.observation_size,
-        core_env.action_size,
+        parametric_action_distribution.param_size,
         core_env.sys.config.dt,
     )
     value_model = net.make_model(
@@ -165,7 +165,7 @@ def train(
 
         normalized_obs = obs_normalizer_apply_fn(normalizer_params, state.obs)
         action_logits = policy_model.apply(policy_params, state.replace(obs=normalized_obs)) # (dmp_unroll_length, batch_size, actions_size)
-        (state, _, _, key), data = jax.lax.scan(do_one_step, (state, key), action_logits)
+        (state, key), data = jax.lax.scan(do_one_step, (state, key), action_logits)
         return (state, normalizer_params, policy_params, key), data
 
 
@@ -174,7 +174,7 @@ def train(
 
         normalized_obs = obs_normalizer_apply_fn(normalizer_params, state.core.obs)
         action_logits = policy_model.apply(policy_params, state.core.replace(obs=normalized_obs)) # (dmp_unroll_length, batch_size, actions_size)
-        (state, key), _ = jax.lax.scan(do_one_step, (state, key), action_logits)
+        (state, key), _ = jax.lax.scan(do_one_step_eval, (state, key), action_logits)
         return (state, normalizer_params, policy_params, key), ()
 
 
@@ -199,14 +199,13 @@ def train(
             truncation=jnp.concatenate(
                 [data.truncation, jnp.expand_dims(state.info['truncation'],
                                                   axis=0)]))
-        return (state, noralizer_params, policy_params, key), data
+        return (state, normalizer_params, policy_params, key), data
 
 
     @jax.jit
     def run_eval(state, key, policy_params,
                  normalizer_params) -> Tuple[EvalEnvState, PRNGKey]:
-      normalized_obs = obs_normalizer_apply_fn(
-          jax.tree_map(lambda x: x[0], normalizer_params), state.core.obs)
+      normalizer_params = jax.tree_map(lambda x: x[0], normalizer_params)
       policy_params = jax.tree_map(lambda x: x[0], policy_params)
       (state, _, _, key), _ = jax.lax.scan(
           generate_dmp_unroll_eval, (state, normalizer_params, policy_params, key), (),

@@ -19,12 +19,12 @@ class NDP(object):
             self,
             cfg: CfgNode,
             observation_size: int,
-            action_size: int,
+            target_action_size: int,
             timestep: float,
     ):
         self.dmp = DMP(cfg, timestep)
         self.phi_net = PhiNet(cfg, observation_size)
-        self.omega_net = OmegaNet(cfg, action_size)
+        self.omega_net = OmegaNet(cfg, target_action_size)
 
 
     def init(self, key: PRNGKey) -> Dict[str, Params]:
