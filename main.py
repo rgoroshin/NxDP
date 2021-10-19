@@ -1,8 +1,11 @@
-import jax
+from datetime import datetime
 import argparse
 
 from config.defaults import get_cfg_defaults
 from brax import envs
+import matplotlib.pyplot as plt
+from IPython.display import clear_output
+
 from train import train
 
 
@@ -32,8 +35,26 @@ def main():
         cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    ant_fn = envs.create_fn("ant")
-    train(cfg, ant_fn)
+    env_fn = envs.create_fn(cfg.ENV.ENV_NAME)
+
+    xdata = []
+    ydata = []
+    times = [datetime.now()]
+
+
+    def progress(num_steps, metrics):
+        times.append(datetime.now())
+        xdata.append(num_steps)
+        ydata.append(metrics['eval/episode_reward'])
+        clear_output(wait=True)
+        plt.xlim([0, cfg.TRAIN.NUM_TIMESTEPS])
+        plt.ylim([0, 6000])
+        plt.xlabel('# environment steps')
+        plt.ylabel('reward per episode')
+        plt.plot(xdata, ydata)
+        plt.show()
+
+    train(cfg, env_fn, progress_fn=progress)
 
 
 if __name__ == '__main__':

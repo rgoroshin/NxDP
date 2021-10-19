@@ -39,14 +39,14 @@ class NDP(object):
     def apply(
             self,
             params: Dict[str, Params],
-            env_state: env.State,
+            observations: jnp.ndarray,
     ) -> jnp.ndarray:
         """ Takes the parameters of phi and omega, + a batch of
             observations as input, spits out the next
             `unroll_length` actions.
         """
         phi_params, omega_params = params['phi'], params['omega']
-        dmp_params = self.phi_net.apply(phi_params, env_state)
+        dmp_params = self.phi_net.apply(phi_params, observations)
         dmp_states = self.dmp.do_dmp_unroll(dmp_params)
         actions = self.omega_net.apply(omega_params, dmp_states)
         return actions

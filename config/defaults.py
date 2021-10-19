@@ -12,7 +12,7 @@ _C = CN()
 _C.DMP = CN()
 _C.DMP.N_DMP = 10
 _C.DMP.N_BFS = 10
-_C.DMP.UNROLL_LENGTH = 20
+_C.DMP.UNROLL_LENGTH = 5
 _C.DMP.INFER_STATE = True
 # TODO: these maybe should be outputted by $\Phi$ net
 _C.DMP.AX = 1.0     # the canonical system's a_x
@@ -54,14 +54,14 @@ _C.VALUE_NET.LR = 1e-3
 # ---------------------------------------------------------------------------- #
 _C.TRAIN = CN()
 _C.TRAIN.LOSS_FN = "ppo_loss"
-_C.TRAIN.NUM_TIMESTEPS = 3000000
+_C.TRAIN.NUM_TIMESTEPS = 6000000
 _C.TRAIN.EPISODE_LENGTH = 1000
 _C.TRAIN.NUM_UPDATE_EPOCHS = 4
 _C.TRAIN.ACTION_REPEAT = 1
 _C.TRAIN.NUM_ENVS = 16 # 2048
 _C.TRAIN.MAX_DEVICES_PER_HOST = 8
 _C.TRAIN.LEARNING_RATE = 3e-4
-_C.TRAIN.UNROLL_LENGTH = 60
+_C.TRAIN.UNROLL_LENGTH = 10
 _C.TRAIN.BATCH_SIZE = 1024
 _C.TRAIN.NUM_MINIBATCHES = 32
 _C.TRAIN.NORMALIZE_OBSERVATIONS = True
