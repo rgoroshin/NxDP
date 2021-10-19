@@ -1,16 +1,14 @@
-import functools
-import time
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Dict
 
 from brax.training import distribution
-from brax.training.types import Params, PRNGKey
+from util.types import PRNGKey, Params
 import flax
 import jax
 import jax.numpy as jnp
 import optax
 from yacs.config import CfgNode
 
-from train import StepData, TrainingState
+from util.types import *
 
 
 def compute_gae(truncation: jnp.ndarray,

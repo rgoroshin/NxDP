@@ -1,8 +1,9 @@
 import jax
-from config.defaults import get_cfg_defaults
-from ndp.dmp import *
-
 import argparse
+
+from config.defaults import get_cfg_defaults
+from brax import envs
+from train import train
 
 
 def main():
@@ -31,18 +32,8 @@ def main():
         cfg.merge_from_list(args.opts)
     cfg.freeze()
 
-    dmp = DMP(cfg, 0.05)
-    dmp_params = ParamsDMP(g=jnp.ones([16, 10]), w=jnp.ones([16, 10, 10]))
-    dmp_state = StateDMP(y=jnp.ones([16, 10]), yd=jnp.ones([16, 10]), x=1.0)
-
-    key = jax.random.PRNGKey(0)
-    dmp_states = dmp.do_dmp_unroll(dmp_params, dmp_state)
-    print(dmp_states)
-    print(dmp_states.y.shape)
-    print(dmp_states.x.shape)
-    print(dmp_states.x)
-    print(dmp_states.y[:, 0, 1])
-    print(dmp_states.yd[:, 0, 1])
+    ant_fn = envs.create_fn("ant")
+    train(cfg, ant_fn)
 
 
 if __name__ == '__main__':

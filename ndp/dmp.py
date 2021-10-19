@@ -3,21 +3,8 @@ from functools import partial
 
 import jax
 from jax import numpy as jnp
-from flax import struct
 from yacs.config import CfgNode
-
-
-@struct.dataclass
-class StateDMP:
-    y: jnp.ndarray
-    yd: jnp.ndarray
-    x: jnp.ndarray
-
-@struct.dataclass
-class ParamsDMP:
-    w: jnp.ndarray
-    g: jnp.ndarray
-    s: StateDmp # dmp starting state
+from util.types import *
 
 
 class DMP(object):

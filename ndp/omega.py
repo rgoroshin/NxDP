@@ -3,11 +3,11 @@ from functools import partial
 
 import jax
 from jax import numpy as jnp
-from brax.training.types import PRNGKey, Param
+from util.types import PRNGKey, Params
 from yacs.config import CfgNode
 
-from ndp.dmp import StateDMP, ParamsDMP
 from util.net import make_model
+from util.types import *
 
 
 class OmegaNet(object):
@@ -39,7 +39,7 @@ class OmegaNet(object):
 
 
     @partial(jax.jit, static_argnums=(0,))
-    def apply(self, params: Param, dmp_states: StateDMP) -> jnp.ndarray:
+    def apply(self, params: Params, dmp_states: StateDMP) -> jnp.ndarray:
         """Calculate policy logits on consecutive pairs
         # TODO: this could be also calculated by taking the state you've landed
         on as the first input and try to derive the system to the next desired

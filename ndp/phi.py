@@ -4,11 +4,11 @@ from functools import partial
 import jax
 from jax import numpy as jnp
 from brax.envs import env
-from brax.training.types import PRNGKey, Param
 from yacs.config import CfgNode
 
-from ndp.dmp import DMP, StateDMP, ParamsDMP
+from ndp.dmp import DMP
 from util.net import make_model
+from util.types import *
 
 
 class PhiNet(object):
@@ -40,7 +40,7 @@ class PhiNet(object):
 
 
     @partial(jax.jit, static_argnums=(0,))
-    def apply(self, params: Param, env_state: env.State) -> ParamsDMP:
+    def apply(self, params: Params, env_state: env.State) -> ParamsDMP:
         """Get the DMP parameters by taking observation as input
         .input:
             params: _phi_net parameters
@@ -57,8 +57,8 @@ class PhiNet(object):
                 w=dmp_params[:, :, :-3], # (batch_size, n_dmp, n_bfs)
                 g=dmp_params[:, :,  -3], # (batch_size, n_dmp)
                 s=StateDMP(
-                    y=dmp_params[:, :, -2]
-                    yd=dmp_params[:, :, -1]
+                    y=dmp_params[:, :, -2],
+                    yd=dmp_params[:, :, -1],
                     x=.0,
                 ),
             )
