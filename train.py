@@ -5,7 +5,6 @@ import time
 from absl import logging
 from brax import envs
 from brax.training import distribution
-from brax.training import env
 from brax.training import normalization
 from brax.training import pmap
 import flax
