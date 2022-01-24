@@ -7,6 +7,7 @@ from brax import envs
 from brax.training import distribution
 from brax.training import env
 from brax.training import normalization
+from brax.training import pmap
 import flax
 import jax
 import jax.numpy as jnp
@@ -26,7 +27,7 @@ def train(
         progress_fn: Optional[Callable[[int, Dict[str, Any]], None]] = None,
         seed: int = 0,
 ):
-    """Training pipeline. Stolen from BRAX for the most part."""
+    """Training pipeline. Stolen from BRAX for the MOST part."""
 
     # CONFIG EXTRACTION
     num_timesteps = cfg.TRAIN.NUM_TIMESTEPS
@@ -113,7 +114,7 @@ def train(
     }
     optimizer = optax.adam(learning_rate=learning_rate)
     optimizer_state = optimizer.init(init_params)
-    optimizer_state, init_params = normalization.bcast_local_devices(
+    optimizer_state, init_params = pmap.bcast_local_devices(
         (optimizer_state, init_params), local_devices_to_use)
 
     normalizer_params, obs_normalizer_update_fn, obs_normalizer_apply_fn = (
@@ -275,11 +276,15 @@ def train(
             batch_size * unroll_length * num_minibatches * action_repeat)
 
     def _minimize_loop(training_state, state):
+        synchro = pmap.is_synchronized(
+            (training_state.optimizer_state, training_state.params,
+             training_state.normalizer_params),
+            axis_name='i')
         (training_state, state), losses = jax.lax.scan(
             run_epoch, (training_state, state), (),
             length=num_epochs // log_frequency)
         losses = jax.tree_map(jnp.mean, losses)
-        return (training_state, state), losses
+        return (training_state, state), losses, synchro
 
     minimize_loop = jax.pmap(_minimize_loop, axis_name='i')
 
@@ -340,7 +345,8 @@ def train(
         t = time.time()
         previous_step = training_state.normalizer_params[0][0]
         # optimization
-        (training_state, state), losses = minimize_loop(training_state, state)
+        (training_state, state), losses, synchro = minimize_loop(training_state, state)
+        assert synchro[0], (it, training_state)
         jax.tree_map(lambda x: x.block_until_ready(), losses)
         sps = ((training_state.normalizer_params[0][0] - previous_step) /
                (time.time() - t)) * action_repeat
@@ -356,10 +362,6 @@ def train(
 
     params = normalizer_params, policy_params
 
-    if process_count > 1:
-        # Make sure all processes stay up until the end of main.
-        x = jnp.ones([jax.local_device_count()])
-        x = jax.device_get(jax.pmap(lambda x: jax.lax.psum(x, 'i'), 'i')(x))
-        assert x[0] == jax.device_count()
+    pmap.synchronize_hosts()
 
     return (params, metrics)

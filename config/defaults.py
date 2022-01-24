@@ -24,9 +24,9 @@ _C.DMP.TAU = 1.0    # temporal scaling
 # ENVIRONMENT
 # ---------------------------------------------------------------------------- #
 _C.ENV = CN()
-_C.ENV.ENV_NAME = "ant"
+_C.ENV.ENV_NAME = "inverted_pendulum"
 _C.ENV.TIMESTEP = 0.05
-_C.ENV.ACTION_REPEAT = 5
+_C.ENV.ACTION_REPEAT = 1
 
 # ---------------------------------------------------------------------------- #
 # OMEGA NET

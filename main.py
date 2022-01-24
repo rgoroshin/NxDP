@@ -10,7 +10,7 @@ from train import train
 
 
 def main():
-    parser = argparse.ArgumentParser(description="HJxB")
+    parser = argparse.ArgumentParser(description="NxDP")
     parser.add_argument(
         "--config-file",
         default="",
@@ -46,6 +46,7 @@ def main():
         times.append(datetime.now())
         xdata.append(num_steps)
         ydata.append(metrics['eval/episode_reward'])
+        print(metrics['eval/episode_reward'])
         clear_output(wait=True)
         plt.xlim([0, cfg.TRAIN.NUM_TIMESTEPS])
         plt.ylim([0, 6000])

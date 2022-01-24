@@ -55,6 +55,6 @@ class PhiNet(object):
             s=StateDMP(
                 y=dmp_params[:, :, -2],
                 yd=dmp_params[:, :, -1],
-                x=.0,
+                x=1.0,
             ),
         )
