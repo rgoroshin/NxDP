@@ -367,7 +367,8 @@ def train(
         cfg,
         core_env.observation_size,
         core_env.action_size,
-        normalize_observations
+        core_env.sys.config.dt,
+        normalize_observations,
     )
 
     params = normalizer_params, policy_params
@@ -377,7 +378,7 @@ def train(
     return (inference_fn, params, metrics)
 
 
-def make_inference_fn(cfg, observation_size, action_size, normalize_observations):
+def make_inference_fn(cfg, observation_size, action_size, dt, normalize_observations):
     """Creates params and inference function for the PPO w/ NDP agent."""
     _, obs_normalizer_apply_fn = normalization.make_data_and_apply_fn(
         observation_size, normalize_observations)
@@ -386,9 +387,9 @@ def make_inference_fn(cfg, observation_size, action_size, normalize_observations
 
     policy_model = NDP(
         cfg,
-        core_env.observation_size,
+        observation_size,
         parametric_action_distribution.param_size,
-        core_env.sys.config.dt,
+        dt,
     )
 
     def inference_fn(params, obs, key):
