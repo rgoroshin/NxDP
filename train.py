@@ -180,11 +180,13 @@ def train(
         (state, _, _, key), data = jax.lax.scan(
             generate_dmp_unroll, (state, normalizer_params, policy_params, key), (),
             length=unroll_length // dmp_unroll_length)
+        # data: (unroll_length // dmp_unroll_length, dmp_unroll_length, batch_size, [obs_size])
         # no need to swap axes
         data = jax.tree_map(
             lambda x: jnp.reshape(x, [unroll_length] + list(x.shape[2:])),
             data,
         )
+        # data: (unroll_length, batch_size, [obs_size])
         # add the last datapoint
         data = data.replace(
             obs=jnp.concatenate(
@@ -196,6 +198,7 @@ def train(
             truncation=jnp.concatenate(
                 [data.truncation, jnp.expand_dims(state.info['truncation'],
                                                   axis=0)]))
+        # data: (unroll_length + 1, batch_size, [obs_size])
         return (state, normalizer_params, policy_params, key), data
 
     @jax.jit
@@ -250,6 +253,7 @@ def train(
             length=batch_size * num_minibatches // num_envs)
         # make unroll first
         data = jax.tree_map(lambda x: jnp.swapaxes(x, 0, 1), data)
+        # data: (batch_size, unroll_length + 1, [obs_size])
         data = jax.tree_map(
             lambda x: jnp.reshape(x, [x.shape[0], -1] + list(x.shape[3:])), data)
 
@@ -359,8 +363,39 @@ def train(
 
     logging.info('total steps: %s', normalizer_params[0] * action_repeat)
 
+    inference_fn = make_inference_fn(
+        cfg,
+        core_env.observation_size,
+        core_env.action_size,
+        normalize_observations
+    )
+
     params = normalizer_params, policy_params
 
     pmap.synchronize_hosts()
 
-    return (params, metrics)
+    return (inference_fn, params, metrics)
+
+
+def make_inference_fn(cfg, observation_size, action_size, normalize_observations):
+    """Creates params and inference function for the PPO w/ NDP agent."""
+    _, obs_normalizer_apply_fn = normalization.make_data_and_apply_fn(
+        observation_size, normalize_observations)
+    parametric_action_distribution = distribution.NormalTanhDistribution(
+        event_size=action_size)
+
+    policy_model = NDP(
+        cfg,
+        core_env.observation_size,
+        parametric_action_distribution.param_size,
+        core_env.sys.config.dt,
+    )
+
+    def inference_fn(params, obs, key):
+        normalizer_params, policy_params = params
+        obs = obs_normalizer_apply_fn(normalizer_params, obs)
+        action = parametric_action_distribution.sample(
+            policy_model.apply(policy_params, obs), key)
+        return action
+
+    return inference_fn
